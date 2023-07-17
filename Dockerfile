@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm as builder
+FROM python:3.11-slim-bookworm as base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -15,6 +15,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 ENV PATH="${POETRY_HOME}/bin:${VENV_PATH}/bin:${PATH}"
 
+FROM base as builder
+
 RUN apt-get update && \
     apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/*
@@ -28,7 +30,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-root
 
 # production container
-FROM builder as production
+FROM base as production
 ENV FASTAPI_ENV=production
 COPY --from=builder ${PYSETUP_PATH} ${PYSETUP_PATH}
 COPY ./test_slack_app/ /app
